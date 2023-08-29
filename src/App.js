@@ -1,31 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 
-import MoviesList from './components/MoviesList';
-import './App.css';
+import MoviesList from "./components/MoviesList";
+import "./App.css";
 
 function App() {
-  const dummyMovies = [
-    {
-      id: 1,
-      title: 'Some Dummy Movie',
-      openingText: 'This is the opening text of the movie',
-      releaseDate: '2021-05-18',
-    },
-    {
-      id: 2,
-      title: 'Some Dummy Movie 2',
-      openingText: 'This is the second opening text of the movie',
-      releaseDate: '2021-05-19',
-    },
-  ];
+  const [movies, setMovies] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const getMoviesHandler = useCallback(() => {
+    setIsLoading(true);
+    fetch("https://swapi.dev/api/films/")
+      .then((response) => {
+        console.log(response);
+        return response.json();
+      })
+      .then((movies) => {
+        console.log(movies);
+        let transformedMovies = movies.results.map((m) => {
+          return {
+            id: m.episode_id,
+            title: m.title,
+            openingText: m.opening_crawl,
+            releaseDate: m.release_date,
+          };
+        });
+        setMovies(transformedMovies);
+        setIsLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    getMoviesHandler();
+  }, [getMoviesHandler]);
 
   return (
     <React.Fragment>
       <section>
-        <button>Fetch Movies</button>
+        <button onClick={getMoviesHandler}>Fetch Movies</button>
       </section>
       <section>
-        <MoviesList movies={dummyMovies} />
+        {!isLoading && movies.length > 0 && <MoviesList movies={movies} />}
+        {isLoading && <p>Loading ...</p>}
+        {!isLoading && movies.length === 0 && <p>Mo movies</p>}
       </section>
     </React.Fragment>
   );
